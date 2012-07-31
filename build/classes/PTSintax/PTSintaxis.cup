@@ -1,0 +1,216 @@
+package PTSintax;
+import java_cup.runtime.*;
+import TablaSimbolos.*;
+
+
+parser code{:
+	
+
+:}
+
+/*-----------------Declaracion de Simbolos terminales y no terminales.--------------*/
+
+/*fin de la declaracion*/
+terminal PCOMA,COMA;
+/*Caracteres especiales*/
+terminal PDERECHO,PIZQUIERDO,CORCHDERECH,CORCHIZQUI,DOSPUNTOS;
+/*Operadores aritmeticos*/
+terminal SUM,REST,MULT,DIV,MASMAS,MENOSMENOS;
+/*Asignacion*/
+terminal ASIG;
+/*Operadores logicos*/
+terminal MAYQ,MENQ,MAYIGU,MENIGU,IGU,DIF,NOT,OR;
+/*booleanos*/
+terminal Boolean BOLEANOS;
+/*Numeros enteros*/
+ terminal Integer ENTEROS;
+
+/*Numeros flotantes*/
+ terminal Float FLOTANTES;
+
+/*Palabras reservadas*/
+terminal IF,ELSE,FOR,DO,WHILE,BEGIN,END,TO,DOWNTO,INT,STRING,FLOAT,CASE,PRINTFN,LET,RETURN,PUNTO,STARTFN,READLN,THEN,DEFAULT,FUNCTION,SWITCH,BOOL,AND;
+/*Identificadores*/
+terminal String ID;
+
+/*Cadena de Caracteres*/
+ terminal String CADENA;
+/*Funciones*/
+non terminal Simbolo.TipoSimbolo tipo;
+non terminal PTPrintfn impr;
+non terminal SymFunction  mainfuncion;
+non terminal PTIdent ident;
+non terminal AsigAtoB asigatob;
+non terminal PTexpList expresiones;
+non terminal PTBoolExpresion booleanExp;
+non terminal PTBoolExpresionList booleanExpList;
+non terminal PTExp exo;
+non terminal PTAritmetic operacionesAritmeticas;
+non terminal PTAritmetic termino;
+non terminal PTAritmetic factor;
+/*non terminal PTFunctionParam parametrosDeFuncion;*/   
+non terminal PTConcat concat;
+/*----------------- Precedencia --------------------------------------------------*/
+
+precedence left SUM,REST;
+precedence left MULT,DIV;
+
+mainfuncion::= FUNCTION STARTFN PDERECHO PIZQUIERDO BEGIN  expresiones:e END  {: RESULT=new SymFunction("main",e); :} ;
+
+expresiones::= exo:e {:RESULT=new PTexpList(e); :}| expresiones:l exo:e {:RESULT= new PTexpList(e,l);:}|
+ expresiones:l impr:p {:RESULT= new PTexpList(p,l);:}|impr:p {:RESULT= new PTexpList(p);:}  ;
+
+
+exo::= asigatob:a PCOMA {:RESULT=a; :}|
+       IF booleanExp:a THEN  expresiones:e END {:RESULT= new PTIFExpresion(a,e); :}|
+       IF booleanExp:a THEN  expresiones:e END ELSE  expresiones:w END {:RESULT= new PTIFExpresion(a,e,w); :}|
+       IF  booleanExp:a THEN BEGIN END| 
+       tipo:t ident:a PCOMA {: 
+                        if(t==Simbolo.TipoSimbolo.Flotante)RESULT= new SymFloat(aleft,aright,a.getNombre()); 
+                        if(t==Simbolo.TipoSimbolo.Entero)RESULT=new SymInt(aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Cadena)RESULT=new SymString(aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Booleano)RESULT=new SymBoolean(aleft,aright,a.getNombre());
+                        :}|
+       tipo:t ident:a ASIG ENTEROS:d PCOMA {: 
+                        if(t==Simbolo.TipoSimbolo.Flotante)RESULT= new SymFloat(Float.parseFloat(d.toString()),aleft,aright,a.getNombre()); 
+                        if(t==Simbolo.TipoSimbolo.Entero)RESULT=new SymInt(d,aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Cadena)RESULT=new SymString(d.toString(),aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Booleano)throw new Exception("Error de sintaxis .No se puede asignar valores enteros a una variable boobleana. Linea: "+aleft+" Columna: "+aright);
+                        :}|
+       tipo:t ident:a ASIG FLOTANTES:d PCOMA {:
+                        if(t==Simbolo.TipoSimbolo.Flotante)RESULT= new SymFloat(d,aleft,aright,a.getNombre()); 
+                        if(t==Simbolo.TipoSimbolo.Entero)RESULT=new SymInt(Integer.parseInt(d.toString()),aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Cadena)RESULT=new SymString(d.toString(),aleft,aright,a.getNombre());
+                        if(t==Simbolo.TipoSimbolo.Booleano)throw new Exception("Error de sintaxis .No se puede asignar valores flotantes a una variable booleana. Linea: "+aleft+" Columna: "+aright);
+                        :}|
+        tipo:t ident:a ASIG CADENA:d PCOMA{:
+                        if(t==Simbolo.TipoSimbolo.Cadena)RESULT=new SymString(d,aleft,aright,a.getNombre());
+                        else throw new Exception("Error de sintaxis .Solo se puede asignar cadenas de caracteres a esta variable. Linea: "+aleft+" Columna: "+aright);
+                        :}|
+                     
+        tipo:t ident:a ASIG BOLEANOS:d PCOMA{:
+                        if(t==Simbolo.TipoSimbolo.Booleano)RESULT=new SymBoolean(d,aleft,aright,a.getNombre());
+                        else throw new Exception("Error de sintaxis .Solo se puede asignar booleanos a esta variable. Linea: "+aleft+" Columna: "+aright);
+                        :}|
+         FOR ident:i TO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,true); :}|
+         FOR ident:i TO ENTEROS:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,true); :} |
+         FOR ident:i TO FLOTANTES:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,true); :}|
+         FOR ENTEROS:i TO ENTEROS:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,true); :}|
+         FOR FLOTANTES:i TO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :}|
+         FOR ENTEROS:i TO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :} |
+         FOR FLOTANTES:i TO FLOTANTES:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,true); :}|
+         FOR ident:i DOWNTO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,false); :}|
+         FOR ident:i DOWNTO ENTEROS:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,false); :}|
+         FOR ident:i DOWNTO FLOTANTES:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,false); :}|
+         FOR ENTEROS:i DOWNTO ENTEROS:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,false); :}|
+         FOR FLOTANTES:i DOWNTO FLOTANTES:b DO expresiones:e END {:RESULT= new PTForExpresion(i,b,e,false); :}|
+         FOR ENTEROS:i DOWNTO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
+         FOR FLOTANTES:i DOWNTO ident:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
+         FOR ident:i TO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :}|
+         FOR ENTEROS:i TO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :}|
+         FOR FLOTANTES:i TO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :}|
+         FOR ident:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
+         FOR ENTEROS:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
+         FOR FLOTANTES:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :};
+                    
+
+termino::= ident:a {:RESULT= new PTAritmetic(a,'#');:}|
+           ENTEROS:a{:RESULT= new PTAritmetic(a,'#');:}|
+           FLOTANTES:a {:RESULT= new PTAritmetic(a,'#');:}|
+           PDERECHO operacionesAritmeticas:d  PIZQUIERDO{:RESULT= new PTAritmetic(0,d,'+');:};
+factor::= termino:a {:RESULT= new PTAritmetic(0,a,'+');:} | factor:f MULT termino:t {:RESULT= new PTAritmetic(f,t,'*');:}|factor:f DIV termino:t{:RESULT= new PTAritmetic(f,t,'/');:};
+operacionesAritmeticas::= operacionesAritmeticas:e SUM factor:f {:RESULT= new PTAritmetic(e,f,'+');:}|
+                          operacionesAritmeticas:e REST factor:f{:RESULT= new PTAritmetic(e,f,'-');:}|
+                          factor:f{:RESULT= new PTAritmetic(0,f,'+');:};
+tipo::= INT{:RESULT= Simbolo.TipoSimbolo.Entero; :}|FLOAT{: RESULT=Simbolo.TipoSimbolo.Flotante; :}|STRING{: RESULT=Simbolo.TipoSimbolo.Cadena; :}|BOOL {: RESULT=Simbolo.TipoSimbolo.Booleano; :} ;
+
+ident::= ID:a {: RESULT= new PTIdent(a); :};
+
+                                         
+impr::= PRINTFN PDERECHO CADENA:e PIZQUIERDO PCOMA {: RESULT= new PTPrintfn(e); :}|
+         PRINTFN PDERECHO ident:e PIZQUIERDO PCOMA {: RESULT= new PTPrintfn(e); :}|
+          PRINTFN PDERECHO concat:e PIZQUIERDO PCOMA {: RESULT= new PTPrintfn(e); :}  ;
+
+asigatob::= /*ident:a ASIG ident:b {: RESULT= new AsigAtoB(a,b); :}|*/ 
+/*ident:a ASIG ENTEROS:d {: RESULT= new AsigAtoB(a,d); :}|*/
+/*ident:a ASIG FLOTANTES:d {: RESULT= new AsigAtoB(a,d); :}|*/
+ident:a ASIG CADENA:d {: RESULT= new AsigAtoB(a,d); :}|
+ident:a ASIG BOLEANOS:d {: RESULT= new AsigAtoB(a,d); :}|
+ident:a ASIG operacionesAritmeticas:o {:RESULT= new AsigAtoB(a,o);:}|
+ident:a ASIG concat:c {:RESULT= new AsigAtoB(a,c);:};
+
+booleanExp::= ident:a IGU ident:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ident:a DIF ident:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ident:a MAYQ ident:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              ident:a MENQ ident:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              ident:a MENIGU ident:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              ident:a MAYIGU ident:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              ident :a IGU BOLEANOS:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ident:a DIF BOLEANOS:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ident :a IGU CADENA:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ident:a DIF CADENA:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ident :a IGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ident:a DIF ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ident:a MAYQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              ident:a MENQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              ident:a MENIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              ident:a MAYIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              BOLEANOS :a IGU BOLEANOS:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              BOLEANOS:a DIF BOLEANOS:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              CADENA :a IGU CADENA:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              CADENA:a DIF CADENA:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ENTEROS:a IGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ENTEROS:a DIF ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ENTEROS:a MAYQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              ENTEROS:a MENQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              ENTEROS:a MENIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              ENTEROS:a MAYIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              FLOTANTES:a IGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              FLOTANTES:a DIF FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              FLOTANTES:a MAYQ FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              FLOTANTES:a MENQ FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              FLOTANTES:a MENIGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              FLOTANTES:a MAYIGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              ENTEROS:a IGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              ENTEROS:a DIF FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              ENTEROS:a MAYQ FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              ENTEROS:a MENQ FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              ENTEROS:a MENIGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              ENTEROS:a MAYIGU FLOTANTES:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              FLOTANTES:a IGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+              FLOTANTES:a DIF ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+              FLOTANTES:a MAYQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+              FLOTANTES:a MENQ ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+              FLOTANTES:a MENIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'~'); :}|
+              FLOTANTES:a MAYIGU ENTEROS:b {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+              BOLEANOS:b {:RESULT= new PTBoolExpresion(b); :}|
+              NOT BOLEANOS:b {:RESULT= new PTBoolExpresion(!b); :}|
+                BOLEANOS:b IGU ident :a {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+                BOLEANOS:b  DIF ident:a {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+                CADENA:b IGU ident :a {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+                CADENA:b DIF ident:a {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+                ENTEROS:b IGU ident :a {: RESULT=  new PTBoolExpresion(a,b,'='); :}|
+                ENTEROS:b DIF ident:a {: RESULT=  new PTBoolExpresion(a,b,'!'); :}|
+                ENTEROS:b MAYQ ident:a {: RESULT=  new PTBoolExpresion(a,b,'<'); :}|
+                ENTEROS:b MENQ ident:a {: RESULT=  new PTBoolExpresion(a,b,'>'); :}|
+                ENTEROS:b MENIGU ident:a {: RESULT=  new PTBoolExpresion(a,b,'#'); :}|
+                ENTEROS:b MAYIGU ident:a {: RESULT=  new PTBoolExpresion(a,b,'~'); :};
+
+/*parametrosDeFuncion::=ENTEROS:a {: RESULT = new PTFunctionParam(a); :} |
+                      FLOTANTES:a {: RESULT = new PTFunctionParam(a); :}|
+                      CADENA:a {: RESULT = new PTFunctionParam(a); :}|
+                      BOLEANOS:a {: RESULT = new PTFunctionParam(a); :}|
+                      ident:a {: RESULT = new PTFunctionParam(a); :}|
+                      parametrosDeFuncion:t COMA ENTEROS:a {: RESULT = new PTFunctionParam(a,t); :}|
+                      parametrosDeFuncion:t COMA FLOTANTES:a {: RESULT = new PTFunctionParam(a,t); :}|
+                      parametrosDeFuncion:t COMA CADENA:a {: RESULT = new PTFunctionParam(a,t); :}|
+                      parametrosDeFuncion:t COMA BOLEANOS:a {: RESULT = new PTFunctionParam(a,t); :}|
+                      parametrosDeFuncion:t COMA ident:a {: RESULT = new PTFunctionParam(a,t); :}
+      ;*/
+
+concat::= ident:a PUNTO ident:b {:RESULT=new PTConcat(a,b);:} | 
+CADENA:a PUNTO CADENA:b {:RESULT=new PTConcat(a,b);:}|
+CADENA:a PUNTO ident:b {:RESULT=new PTConcat(a,b,true);:} | 
+ident:a PUNTO CADENA:b {:RESULT=new PTConcat(b,a,false);:}|
+concat:c PUNTO CADENA:a {:RESULT=new PTConcat(a,c,false);:}|
+concat:c PUNTO ident:a {:RESULT=new PTConcat(a,c,false);:};
