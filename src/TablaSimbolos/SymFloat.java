@@ -10,7 +10,7 @@ package TablaSimbolos;
  */
 public class SymFloat extends  Simbolo{
     Float valor;
-
+    
     public SymFloat(Float valor, int numeroLinea, int numeroColumna, String nombre) {
         super(numeroLinea, numeroColumna, nombre);
         this.valor = valor;
@@ -18,6 +18,11 @@ public class SymFloat extends  Simbolo{
 
     public SymFloat(int numeroLinea, int numeroColumna, String nombre) {
         super(numeroLinea, numeroColumna, nombre);
+    }
+    
+    public SymFloat(int numeroLinea, int numeroColumna, String nombre, PTReadLn _r) {
+        super(numeroLinea, numeroColumna, nombre);
+        this.r=_r;
     }
 
     public Float getValor() {

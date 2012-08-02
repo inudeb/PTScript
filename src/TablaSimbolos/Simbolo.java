@@ -13,6 +13,7 @@ package TablaSimbolos;
     int numeroLinea,numeroColumna,indice;
     String nombre;
     SymbolsTable t;
+    PTReadLn r;
     public int getIndice() {
         return indice;
     }
@@ -37,7 +38,17 @@ package TablaSimbolos;
 
     @Override
     public void ejecutarSintaxis() throws Exception {
-        
+      if(r!=null){
+          r.ejecutarSintaxis();
+           if(this.TipoDato()==Simbolo.TipoSimbolo.Cadena)
+                    ((SymString)this).setValor(r.getRet().toString());
+           if(this.TipoDato()== Simbolo.TipoSimbolo.Entero)
+               ((SymInt)this).setValor(Integer.parseInt(r.getRet().toString()));
+           if(this.TipoDato()== Simbolo.TipoSimbolo.Flotante)
+               ((SymFloat)this).setValor(Float.parseFloat(r.getRet().toString()));
+           if(this.TipoDato()== Simbolo.TipoSimbolo.Booleano)
+               ((SymBoolean)this).setValor(Boolean.parseBoolean( r.getRet().toString()));
+      }
     }
     
     public static enum TipoSimbolo{Entero,Flotante,Cadena,Booleano,Funcion,Anonimo };

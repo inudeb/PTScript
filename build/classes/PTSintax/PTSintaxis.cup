@@ -48,6 +48,7 @@ non terminal PTExp exo;
 non terminal PTAritmetic operacionesAritmeticas;
 non terminal PTAritmetic termino;
 non terminal PTAritmetic factor;
+non terminal PTReadLn leer;
 /*non terminal PTFunctionParam parametrosDeFuncion;*/   
 non terminal PTConcat concat;
 /*----------------- Precedencia --------------------------------------------------*/
@@ -111,9 +112,14 @@ exo::= asigatob:a PCOMA {:RESULT=a; :}|
          FOR FLOTANTES:i TO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,true); :}|
          FOR ident:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
          FOR ENTEROS:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
-         FOR FLOTANTES:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :};
-                    
-
+         FOR FLOTANTES:i DOWNTO booleanExp:b DO expresiones:e END {:RESULT= new PTForExpresion(e,b,i,false); :}|
+         tipo:t ident:a ASIG leer:l PCOMA{:
+             if(t==Simbolo.TipoSimbolo.Flotante)RESULT= new SymFloat(aleft,aright,a.getNombre(),l); 
+             if(t==Simbolo.TipoSimbolo.Entero)RESULT=new SymInt(aleft,aright,a.getNombre(),l);
+             if(t==Simbolo.TipoSimbolo.Cadena)RESULT=new SymString(aleft,aright,a.getNombre(),l);
+             if(t==Simbolo.TipoSimbolo.Booleano)RESULT=new SymBoolean(aleft,aright,a.getNombre(),l);
+         :};
+leer::= READLN PDERECHO CADENA:c PIZQUIERDO {:RESULT= new PTReadLn(c); :};
 termino::= ident:a {:RESULT= new PTAritmetic(a,'#');:}|
            ENTEROS:a{:RESULT= new PTAritmetic(a,'#');:}|
            FLOTANTES:a {:RESULT= new PTAritmetic(a,'#');:}|

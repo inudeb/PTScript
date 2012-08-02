@@ -19,6 +19,10 @@ public class SymString extends  Simbolo{
     public SymString(int numeroLinea, int numeroColumna, String nombre) {
         super(numeroLinea, numeroColumna, nombre);
     }
+    public SymString(int numeroLinea, int numeroColumna, String nombre, PTReadLn _r) {
+        super(numeroLinea, numeroColumna, nombre);
+        this.r=_r;
+    }
 
     public String getValor() {
         return valor;

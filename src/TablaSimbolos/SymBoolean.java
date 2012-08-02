@@ -19,6 +19,10 @@ public class SymBoolean extends  Simbolo{
     public SymBoolean(int numeroLinea, int numeroColumna, String nombre) {
         super(numeroLinea, numeroColumna, nombre);
     }
+     public SymBoolean(int numeroLinea, int numeroColumna, String nombre, PTReadLn _r) {
+        super(numeroLinea, numeroColumna, nombre);
+        this.r= _r;
+    }
 
     public Boolean getValor() {
         return valor;

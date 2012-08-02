@@ -19,7 +19,11 @@ public class SymInt extends Simbolo{
     public SymInt(int numeroLinea, int numeroColumna, String nombre) {
         super(numeroLinea, numeroColumna, nombre);
     }
-
+public SymInt(int numeroLinea, int numeroColumna, String nombre,PTReadLn _r) {
+        super(numeroLinea, numeroColumna, nombre);
+        this.r=_r;
+    }
+    
     public Integer getValor() {
         return valor;
     }

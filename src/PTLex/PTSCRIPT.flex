@@ -51,6 +51,7 @@ numeroDecimal={digito}+(\.{digito}+)
          ">"    {return symbol(sym.MAYQ,yyline,yycolumn);}
          "<"    {return symbol(sym.MENQ,yyline,yycolumn);}
          "equals"   {return symbol(sym.IGU,yyline,yycolumn);}
+         "readln" {return symbol(sym.READLN,yyline,yycolumn);}
          "not"  {return symbol(sym.NOT,yyline,yycolumn); }
          "true" {return symbol(sym.BOLEANOS,yyline,yycolumn,true);}
          "false" {return symbol(sym.BOLEANOS,yyline,yycolumn,false);}
